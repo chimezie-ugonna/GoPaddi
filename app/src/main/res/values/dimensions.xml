@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="spacingXxxs">4dp</dimen>
+    <dimen name="spacingXxs">8dp</dimen>
+    <dimen name="spacingXs">10dp</dimen>
+    <dimen name="spacingSm">12dp</dimen>
+    <dimen name="spacingSm2">14dp</dimen>
+    <dimen name="topBarHorizontalPadding">16dp</dimen>
+    <dimen name="topBarVerticalPadding">18dp</dimen>
+    <dimen name="iconSize">20dp</dimen>
+    <dimen name="spacingXmd">22dp</dimen>
+    <dimen name="spacingMd">23dp</dimen>
+    <dimen name="spacingMd2">24dp</dimen>
+    <dimen name="spacingBg">28dp</dimen>
+    <dimen name="buttonHeight">48dp</dimen>
+    <dimen name="topBarHeight">62dp</dimen>
+</resources>

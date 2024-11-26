@@ -1,3 +1,21 @@
 <resources>
     <string name="app_name">GoPaddi</string>
+    <string name="an_arrow_back_icon">An arrow back icon</string>
+    <string name="plan_a_trip">Plan a Trip</string>
+    <string name="plan_your_dream_trip_in_minutes">Plan Your Dream Trip in Minutes</string>
+    <string name="build_personalize_and_optimize_your_itineraries_with_our_trip_planner_perfect_for_getaways_remote_workcations_and_any_spontaneous_escapade">Build, personalize, and optimize your itineraries with our trip planner. Perfect for getaways, remote workcations, and any spontaneous escapade.</string>
+    <string name="where_to">Where to?</string>
+    <string name="select_city">Select City</string>
+    <string name="enter_date">Enter Date</string>
+    <string name="start_date">Start Date</string>
+    <string name="end_date">End Date</string>
+    <string name="create_a_trip">Create a Trip</string>
+    <string name="your_trips">Your Trips</string>
+    <string name="your_trip_itineraries_and_planned_trips_are_placed_here">Your trip itineraries and planned trips are placed here.</string>
+    <string name="planned_trips">Planned Trips</string>
+    <string name="no_trips_yet">No trips yet</string>
+    <string name="add_a_trip_to_see_it_here">Add a trip to see it here.</string>
+    <string name="where">Where</string>
+    <string name="date">Date</string>
+    <string name="view">View</string>
 </resources>
