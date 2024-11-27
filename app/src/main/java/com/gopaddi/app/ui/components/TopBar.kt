@@ -28,7 +28,10 @@ import com.gopaddi.app.R
 
 @Composable
 fun CustomTopBar(
-    leadingIconResource: Int? = null, leadingIconOnClick: () -> Unit = {}, textResource: Int
+    leadingIconResource: Int? = null,
+    leadingIconOnClick: () -> Unit = {},
+    leadingIconContentDescription: Int? = null,
+    textResource: Int
 ) {
     Column {
         Row(
@@ -53,7 +56,7 @@ fun CustomTopBar(
                         ) { leadingIconOnClick() },
                     painter = painterResource(id = leadingIconResource),
                     contentDescription = stringResource(
-                        R.string.an_arrow_back_icon
+                        id = leadingIconContentDescription ?: R.string.an_arrow_back_icon
                     ),
                     tint = MaterialTheme.colorScheme.onTertiary
                 )

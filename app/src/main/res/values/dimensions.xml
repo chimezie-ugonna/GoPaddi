@@ -11,7 +11,9 @@
     <dimen name="spacingXmd">22dp</dimen>
     <dimen name="spacingMd">23dp</dimen>
     <dimen name="spacingMd2">24dp</dimen>
+    <dimen name="spacingMd3">26dp</dimen>
     <dimen name="spacingBg">28dp</dimen>
     <dimen name="buttonHeight">48dp</dimen>
+    <dimen name="textFieldHeight">48dp</dimen>
     <dimen name="topBarHeight">62dp</dimen>
 </resources>

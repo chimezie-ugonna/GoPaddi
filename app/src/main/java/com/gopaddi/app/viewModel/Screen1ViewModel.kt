@@ -83,6 +83,10 @@ class Screen1ViewModel : ViewModel() {
         }
     }
 
+    fun isEmpty(status: Boolean) {
+        isEmpty = status
+    }
+
     fun showError(status: Boolean) {
         showError = status
     }
