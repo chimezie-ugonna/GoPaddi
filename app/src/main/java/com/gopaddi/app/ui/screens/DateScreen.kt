@@ -1,6 +1,7 @@
 package com.gopaddi.app.ui.screens
 
 import android.view.HapticFeedbackConstants
+import android.view.View
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -59,13 +61,15 @@ fun DateScreen(navController: NavController) {
 
         val startDate = rememberSaveable { mutableStateOf("") }
         val endDate = rememberSaveable { mutableStateOf("") }
+        val duration = rememberSaveable { mutableStateOf("") }
+        val view = LocalView.current
 
-        FullScreenCalendar(modifier = Modifier.weight(weight = 1f)) { s, e, _ ->
+        FullScreenCalendar(view = view, modifier = Modifier.weight(weight = 1f)) { s, e, d ->
             startDate.value = s
             endDate.value = e
+            duration.value = d
         }
 
-        val view = LocalView.current
         val hapticFeedbackPerformed = rememberSaveable { mutableStateOf(false) }
         LaunchedEffect(key1 = hapticFeedbackPerformed.value) {
             if (!hapticFeedbackPerformed.value) {
@@ -118,6 +122,9 @@ fun DateScreen(navController: NavController) {
                     )
                     navController.previousBackStackEntry?.savedStateHandle?.set(
                         "endDateSelected", endDate.value
+                    )
+                    navController.previousBackStackEntry?.savedStateHandle?.set(
+                        "durationSelected", duration.value
                     )
                     navController.popBackStack()
                 }
@@ -183,12 +190,12 @@ fun DateField(modifier: Modifier, titleTextResource: Int, date: String) {
 
 @Composable
 fun FullScreenCalendar(
-    modifier: Modifier = Modifier, onDateSelected: (String, String, String) -> Unit
+    view: View, modifier: Modifier = Modifier, onDateSelected: (String, String, String) -> Unit
 ) {
     val currentDate = remember { LocalDate.now() }
-    val selectedStartDate = remember { mutableStateOf<LocalDate?>(null) }
-    val selectedEndDate = remember { mutableStateOf<LocalDate?>(null) }
-    val dateFormatter = DateTimeFormatter.ofPattern("d'st' MMMM yyyy")
+    val selectedStartDate = rememberSaveable { mutableStateOf<LocalDate?>(null) }
+    val selectedEndDate = rememberSaveable { mutableStateOf<LocalDate?>(null) }
+    val dateFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy")
 
     LazyColumn(
         modifier = modifier.fillMaxSize()
@@ -196,10 +203,9 @@ fun FullScreenCalendar(
         items(12) { monthOffset ->
             val displayedMonth = currentDate.plusMonths(monthOffset.toLong())
 
-            Text(
-                text = "${
-                    displayedMonth.month.name.lowercase().replaceFirstChar { it.uppercase() }
-                } ${displayedMonth.year}",
+            Text(text = "${
+                displayedMonth.month.name.lowercase().replaceFirstChar { it.uppercase() }
+            } ${displayedMonth.year}",
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.W700,
                 color = MaterialTheme.colorScheme.onBackground,
@@ -207,40 +213,48 @@ fun FullScreenCalendar(
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-            )
+                    .padding(
+                        top = if (monthOffset == 0) dimensionResource(id = R.dimen.topBarHorizontalPadding) else dimensionResource(
+                            id = R.dimen.spacingSm
+                        ), bottom = dimensionResource(id = R.dimen.spacingXxs)
+                    ))
 
-            CalendarMonth(
+            CalendarMonth(monthOffset = monthOffset,
+                view = view,
                 month = displayedMonth.month,
                 year = displayedMonth.year,
                 selectedStartDate = selectedStartDate.value,
                 selectedEndDate = selectedEndDate.value,
                 onDateClick = { clickedDate ->
-                    if (selectedStartDate.value == null || (selectedEndDate.value != null)) {
+                    if (selectedStartDate.value == null || selectedStartDate.value != null && selectedEndDate.value != null || selectedStartDate.value != null && clickedDate.isBefore(
+                            selectedStartDate.value
+                        )
+                    ) {
                         selectedStartDate.value = clickedDate
                         selectedEndDate.value = null
-                    } else if (clickedDate != selectedStartDate.value) {
+                    } else if (selectedEndDate.value == null) {
                         selectedEndDate.value = clickedDate
                     }
 
-                    if (selectedStartDate.value != null && selectedEndDate.value != null) {
-                        val duration = ChronoUnit.DAYS.between(
-                            selectedStartDate.value, selectedEndDate.value
-                        ) + 1
-                        onDateSelected(
-                            selectedStartDate.value!!.format(dateFormatter),
-                            selectedEndDate.value!!.format(dateFormatter),
-                            "$duration days"
-                        )
-                    }
-                }
-            )
+                    onDateSelected(
+                        selectedStartDate.value?.format(dateFormatter).orEmpty(),
+                        selectedEndDate.value?.format(dateFormatter).orEmpty(),
+                        if (selectedStartDate.value != null && selectedEndDate.value != null) {
+                            val duration = ChronoUnit.DAYS.between(
+                                selectedStartDate.value, selectedEndDate.value
+                            ) + 1
+                            "$duration ${if (duration == 1L) "day" else "days"}"
+                        } else ""
+                    )
+                })
         }
     }
 }
 
 @Composable
 fun CalendarMonth(
+    monthOffset: Int,
+    view: View,
     month: Month,
     year: Int,
     selectedStartDate: LocalDate?,
@@ -251,12 +265,25 @@ fun CalendarMonth(
     val daysInMonth = firstDayOfMonth.lengthOfMonth()
     val startDayOfWeek = firstDayOfMonth.dayOfWeek.value % 7
 
+    val daysGrid = (1..daysInMonth).map { firstDayOfMonth.plusDays(it.toLong() - 1) }
+
+    val fillerDaysBefore =
+        (1..startDayOfWeek).map { firstDayOfMonth.minusDays(it.toLong()) }.reversed()
+
+    val fillerDaysAfter = (1..(7 - (daysGrid.size + fillerDaysBefore.size) % 7) % 7).map {
+        firstDayOfMonth.plusDays(daysInMonth.toLong() - 1 + it)
+    }
+
+    val allDays = fillerDaysBefore + daysGrid + fillerDaysAfter
+
     Column(
         modifier = Modifier.padding(horizontal = dimensionResource(id = R.dimen.topBarHorizontalPadding)),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(space = dimensionResource(id = R.dimen.spacingXxs))
+        ) {
             listOf("Su", "Mo", "Tu", "We", "Th", "Fr", "Sa").forEach {
                 Text(
                     text = it,
@@ -269,51 +296,52 @@ fun CalendarMonth(
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(height = dimensionResource(id = R.dimen.spacingXxs)))
 
-
-        val daysGrid = (1..daysInMonth).map { firstDayOfMonth.plusDays(it.toLong() - 1) }
-
-        // Create a fixed grid with days of the month
-        val rows = (startDayOfWeek until daysInMonth + startDayOfWeek).chunked(7)
-        rows.forEach { week ->
+        allDays.chunked(7).forEachIndexed { weekIndex, week ->
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(space = dimensionResource(id = R.dimen.spacingXxs)),
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                week.forEach { dayIndex ->
-                    val day =
-                        if (dayIndex < startDayOfWeek || dayIndex >= daysInMonth + startDayOfWeek) {
-                            null
-                        } else {
-                            daysGrid[dayIndex - startDayOfWeek]
-                        }
-
+                week.forEach { day ->
                     Box(
                         modifier = Modifier
-                            .padding(vertical = dimensionResource(id = R.dimen.spacingXxxs))
+                            .weight(1f)
+                            .padding(
+                                top = dimensionResource(id = R.dimen.spacingXxxs),
+                                bottom = if (monthOffset == 11 && weekIndex == allDays.chunked(7).size - 1) dimensionResource(
+                                    id = R.dimen.topBarHorizontalPadding
+                                ) else dimensionResource(
+                                    id = R.dimen.spacingXxxs
+                                )
+                            )
+                            .heightIn(min = 40.dp)
                             .clip(MaterialTheme.shapes.extraSmall)
                             .background(
-                                color = when {
-                                    day == selectedStartDate || day == selectedEndDate -> MaterialTheme.colorScheme.primary
-                                    day != null && day.isBefore(LocalDate.now()) -> MaterialTheme.colorScheme.tertiaryContainer
+                                color = when (day) {
+                                    null -> MaterialTheme.colorScheme.tertiaryContainer
+                                    selectedStartDate, selectedEndDate -> MaterialTheme.colorScheme.primary
                                     else -> MaterialTheme.colorScheme.secondaryContainer
                                 }
                             )
-                            .padding(all = dimensionResource(id = R.dimen.spacingXxs))
                             .clickable(enabled = day != null && !day.isBefore(LocalDate.now())) {
                                 day?.let { onDateClick(it) }
-                            },
-                        contentAlignment = Alignment.Center
+                                view.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
+                            }, contentAlignment = Alignment.Center
                     ) {
                         day?.let {
                             Text(
-                                text = it.dayOfMonth.toString(),
+                                text = day.dayOfMonth.toString(),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = when {
                                     it == selectedStartDate || it == selectedEndDate -> MaterialTheme.colorScheme.background
-                                    it.isBefore(LocalDate.now()) -> MaterialTheme.colorScheme.surfaceDim
+                                    it.isBefore(LocalDate.now()) || fillerDaysBefore.contains(
+                                        element = it
+                                    ) || fillerDaysAfter.contains(
+                                        element = it
+                                    ) -> MaterialTheme.colorScheme.surfaceDim
+
                                     else -> MaterialTheme.colorScheme.onBackground
                                 }
                             )

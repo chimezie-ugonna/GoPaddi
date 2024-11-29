@@ -59,23 +59,23 @@ fun Navigation(navController: NavHostController = rememberNavController()) {
         }
         composable(route = "whereToScreen", enterTransition = {
             slideInVertically(initialOffsetY = { it })
-        }, exitTransition = {
-            slideOutVertically(targetOffsetY = { -it })
         }, popEnterTransition = {
             slideInVertically(initialOffsetY = { it })
+        }, exitTransition = {
+            slideOutVertically(targetOffsetY = { it })
         }, popExitTransition = {
-            slideOutVertically(targetOffsetY = { -it })
+            slideOutVertically(targetOffsetY = { it })
         }) {
             WhereToScreen(navController = navController, viewModel = viewModel())
         }
         composable(route = "DateScreen", enterTransition = {
             slideInVertically(initialOffsetY = { it })
-        }, exitTransition = {
-            slideOutVertically(targetOffsetY = { -it })
         }, popEnterTransition = {
             slideInVertically(initialOffsetY = { it })
+        }, exitTransition = {
+            slideOutVertically(targetOffsetY = { it })
         }, popExitTransition = {
-            slideOutVertically(targetOffsetY = { -it })
+            slideOutVertically(targetOffsetY = { it })
         }) {
             DateScreen(navController = navController)
         }

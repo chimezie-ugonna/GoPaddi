@@ -4,5 +4,6 @@ data class SearchData(
     val city: String,
     val airport: String,
     val isoCode: String,
-    val countryIconResource: Int
+    val countryIconResource: Int,
+    val imageUrl: String
 )

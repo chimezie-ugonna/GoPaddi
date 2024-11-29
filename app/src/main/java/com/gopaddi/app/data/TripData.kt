@@ -1,12 +1,15 @@
 package com.gopaddi.app.data
 
+import java.util.UUID
+
 data class TripData(
-    val tripName: String = "",
-    val tripDescription: String = "",
-    val location: String = "",
-    val travelStyle: String = "",
-    val startDate: String = "",
-    val endDate: String = "",
-    val duration: String = "",
-    val imageUrl: String = ""
+    val id: String = UUID.randomUUID().toString(),
+    var tripName: String = "",
+    var tripDescription: String = "",
+    var location: String = "",
+    var travelStyle: String = "",
+    var startDate: String = "",
+    var endDate: String = "",
+    var duration: String = "",
+    var imageUrl: String = ""
 )

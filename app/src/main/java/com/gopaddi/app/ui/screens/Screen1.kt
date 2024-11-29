@@ -7,11 +7,12 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -25,6 +26,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -36,10 +38,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -61,38 +65,92 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun Screen1(navController: NavController, viewModel: Screen1ViewModel) {
-    Box {
-        val snackBarHostState = remember {
-            SnackbarHostState()
-        }
-        val scope = rememberCoroutineScope()
-        val snackBarMessageResource = remember {
-            mutableIntStateOf(0)
-        }
-        val snackBarMessage = remember {
-            mutableStateOf("")
-        }
-        val snackBarIsError = remember {
-            mutableStateOf(true)
-        }
+    val snackBarHostState = remember {
+        SnackbarHostState()
+    }
+    val scope = rememberCoroutineScope()
+    val snackBarMessageResource = remember {
+        mutableIntStateOf(0)
+    }
+    val snackBarMessage = remember {
+        mutableStateOf("")
+    }
+    val snackBarIsError = remember {
+        mutableStateOf(true)
+    }
+    val context = LocalContext.current
 
-        LaunchedEffect(viewModel.showError) {
-            if (viewModel.showError) {
-                snackBarIsError.value = true
-                snackBarMessageResource.intValue = 0
-                snackBarMessage.value = viewModel.errorMessage
-                scope.launch { snackBarHostState.showSnackbar("") }
-                viewModel.showError(status = false)
+    LaunchedEffect(viewModel.showError) {
+        if (viewModel.showError) {
+            snackBarIsError.value = true
+            snackBarMessageResource.intValue = 0
+            snackBarMessage.value = viewModel.errorMessage
+            scope.launch { snackBarHostState.showSnackbar("") }
+            viewModel.showError(status = false)
+        }
+    }
+
+    if (!viewModel.hasLoaded) {
+        viewModel.fetchTrips(context = context)
+        viewModel.hasLoaded(status = true)
+    }
+
+    val location = rememberSaveable { mutableStateOf("") }
+    val startDate = rememberSaveable { mutableStateOf("") }
+    val endDate = rememberSaveable { mutableStateOf("") }
+
+    if (viewModel.tripIsCreated) {
+        location.value = ""
+        startDate.value = ""
+        endDate.value = ""
+        snackBarIsError.value = false
+        snackBarMessageResource.intValue = R.string.trip_created_successfully
+        snackBarMessage.value = ""
+        LaunchedEffect(Unit) {
+            scope.launch {
+                snackBarHostState.showSnackbar("")
             }
         }
+        viewModel.resetTripData()
+        viewModel.tripIsCreated(status = false)
+    }
 
+    UpdateFieldFromSavedState(
+        navController = navController, key = "citySelected"
+    ) {
+        viewModel.tripData.location = it
+        location.value = it
+    }
+    UpdateFieldFromSavedState(
+        navController = navController, key = "imageUrlSelected"
+    ) {
+        viewModel.tripData.imageUrl = it
+    }
+    UpdateFieldFromSavedState(
+        navController = navController, key = "startDateSelected"
+    ) {
+        viewModel.tripData.startDate = it
+        startDate.value = it
+    }
+    UpdateFieldFromSavedState(
+        navController = navController, key = "endDateSelected"
+    ) {
+        viewModel.tripData.endDate = it
+        endDate.value = it
+    }
+    UpdateFieldFromSavedState(
+        navController = navController, key = "durationSelected"
+    ) {
+        viewModel.tripData.duration = it
+    }
+
+    Box {
         Column {
             CustomTopBar(
                 textResource = R.string.plan_a_trip
             )
             LazyColumn {
                 item {
-
                     Box(modifier = Modifier.fillMaxWidth()) {
                         Image(
                             modifier = Modifier
@@ -132,41 +190,6 @@ fun Screen1(navController: NavController, viewModel: Screen1ViewModel) {
                             )
                         }
 
-                        val selectedCity = rememberSaveable { mutableStateOf("") }
-                        val citySelected =
-                            navController.currentBackStackEntry?.savedStateHandle?.getLiveData<String>(
-                                "citySelected"
-                            )?.observeAsState()
-                        citySelected?.value?.let {
-                            selectedCity.value = if (it.isNotEmpty()) it else selectedCity.value
-                            navController.previousBackStackEntry?.savedStateHandle?.set(
-                                "citySelected", ""
-                            )
-                        }
-                        val selectedStartDate = rememberSaveable { mutableStateOf("") }
-                        val startDateSelected =
-                            navController.currentBackStackEntry?.savedStateHandle?.getLiveData<String>(
-                                "startDateSelected"
-                            )?.observeAsState()
-                        startDateSelected?.value?.let {
-                            selectedStartDate.value =
-                                if (it.isNotEmpty()) it else selectedStartDate.value
-                            navController.previousBackStackEntry?.savedStateHandle?.set(
-                                "startDateSelected", ""
-                            )
-                        }
-                        val selectedEndDate = rememberSaveable { mutableStateOf("") }
-                        val endDateSelected =
-                            navController.currentBackStackEntry?.savedStateHandle?.getLiveData<String>(
-                                "endDateSelected"
-                            )?.observeAsState()
-                        endDateSelected?.value?.let {
-                            selectedEndDate.value = if (it.isNotEmpty()) it else selectedEndDate.value
-                            navController.previousBackStackEntry?.savedStateHandle?.set(
-                                "endDateSelected", ""
-                            )
-                        }
-
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -182,7 +205,7 @@ fun Screen1(navController: NavController, viewModel: Screen1ViewModel) {
                                 modifier = Modifier.fillMaxWidth(),
                                 leadingIconResource = R.drawable.mappin,
                                 headerTextResource = R.string.where_to,
-                                subText = selectedCity.value,
+                                subText = location,
                                 subTextResource = R.string.select_city
                             ) {
                                 navController.navigate(route = "WhereToScreen")
@@ -200,7 +223,7 @@ fun Screen1(navController: NavController, viewModel: Screen1ViewModel) {
                                     modifier = Modifier.weight(weight = 0.5f),
                                     leadingIconResource = R.drawable.calendarblank,
                                     headerTextResource = R.string.start_date,
-                                    subText = selectedStartDate.value,
+                                    subText = startDate,
                                     subTextResource = R.string.enter_date
                                 ) {
                                     navController.navigate(route = "DateScreen")
@@ -210,44 +233,22 @@ fun Screen1(navController: NavController, viewModel: Screen1ViewModel) {
                                     modifier = Modifier.weight(weight = 0.5f),
                                     leadingIconResource = R.drawable.calendarblank,
                                     headerTextResource = R.string.end_date,
-                                    subText = selectedEndDate.value,
+                                    subText = endDate,
                                     subTextResource = R.string.enter_date
                                 ) {
                                     navController.navigate(route = "DateScreen")
                                 }
                             }
 
-                            val createdTripData = rememberSaveable { mutableStateOf<TripData?>(null) }
-                            LaunchedEffect(createdTripData.value) {
-                                if (createdTripData.value != null) {
-                                    val tripData = createdTripData.value
-                                    viewModel.tripItems.toMutableList().apply {
-                                        if (tripData != null) {
-                                            snackBarIsError.value = false
-                                            snackBarMessageResource.intValue =
-                                                R.string.trip_created_successfully
-                                            snackBarMessage.value = ""
-                                            scope.launch {
-                                                snackBarHostState.showSnackbar("")
-                                            }
-                                            add(0, tripData)
-                                            if (viewModel.isEmpty) {
-                                                viewModel.isEmpty(status = false)
-                                            }
-                                        }
-                                    }
-                                    createdTripData.value = null
-                                }
-                            }
-
                             val showBottomSheet = rememberSaveable { mutableStateOf(false) }
 
-                            val hasPerformedHapticFeedback = rememberSaveable { mutableStateOf(false) }
+                            val hasPerformedHapticFeedback =
+                                rememberSaveable { mutableStateOf(false) }
 
                             CustomBottomSheet(
                                 showBottomSheet = showBottomSheet,
                                 hasPerformedHapticFeedback = hasPerformedHapticFeedback,
-                                createdTripData = createdTripData
+                                viewModel = viewModel
                             )
 
                             CustomButton(
@@ -256,9 +257,11 @@ fun Screen1(navController: NavController, viewModel: Screen1ViewModel) {
                                     .height(height = dimensionResource(id = R.dimen.topBarHeight)),
                                 verticalPadding = dimensionResource(id = R.dimen.spacingXxs),
                                 horizontalPadding = dimensionResource(id = R.dimen.topBarHorizontalPadding),
-                                enabled = selectedCity.value.isNotEmpty() && selectedStartDate.value.isNotEmpty() && selectedEndDate.value.isNotEmpty(),
+                                enabled = viewModel.tripData.location.isNotEmpty() && viewModel.tripData.startDate.isNotEmpty() && viewModel.tripData.endDate.isNotEmpty(),
                                 textResource = R.string.create_a_trip
                             ) {
+                                viewModel.tripName.value = TextFieldValue("")
+                                viewModel.tripDescription.value = TextFieldValue("")
                                 showBottomSheet.value = true
                             }
                         }
@@ -333,16 +336,6 @@ fun Screen1(navController: NavController, viewModel: Screen1ViewModel) {
                     }
                 }
 
-                item {
-                    val hasLoaded = rememberSaveable { mutableStateOf(false) }
-                    LaunchedEffect(key1 = hasLoaded.value) {
-                        if (!hasLoaded.value) {
-                            viewModel.loadData()
-                            hasLoaded.value = true
-                        }
-                    }
-                }
-
                 if (viewModel.isLoading) {
                     items(count = 4) { index ->
                         ShimmerLoaderItem(index = index, isLoading = viewModel.isLoading)
@@ -352,14 +345,15 @@ fun Screen1(navController: NavController, viewModel: Screen1ViewModel) {
                         item {
                             Column(
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .fillMaxHeight()
+                                    .fillMaxSize()
                                     .padding(
                                         vertical = dimensionResource(id = R.dimen.spacingMd2),
                                         horizontal = dimensionResource(id = R.dimen.topBarHorizontalPadding)
-                                    ),
-                                verticalArrangement = Arrangement.spacedBy(space = dimensionResource(id = R.dimen.spacingXxxs)),
-                                horizontalAlignment = Alignment.CenterHorizontally
+                                    ), verticalArrangement = Arrangement.spacedBy(
+                                    space = dimensionResource(
+                                        id = R.dimen.spacingXxxs
+                                    )
+                                ), horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 Text(
                                     text = stringResource(R.string.no_trips_yet),
@@ -379,13 +373,53 @@ fun Screen1(navController: NavController, viewModel: Screen1ViewModel) {
                             }
                         }
                     } else {
-                        itemsIndexed(viewModel.tripItems) { index, item ->
-                            TripItem(
-                                navController = navController,
-                                index = index,
-                                item = item,
-                                size = viewModel.tripItems.size
-                            )
+                        if (viewModel.tripItems.isEmpty()) {
+                            item {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(
+                                            vertical = dimensionResource(id = R.dimen.spacingMd2),
+                                            horizontal = dimensionResource(id = R.dimen.topBarHorizontalPadding)
+                                        )
+                                        .clickable(
+                                            interactionSource = remember { MutableInteractionSource() },
+                                            indication = null
+                                        ) {
+                                            viewModel.fetchTrips(context = context)
+                                        }, verticalArrangement = Arrangement.spacedBy(
+                                        space = dimensionResource(
+                                            id = R.dimen.spacingXxxs
+                                        )
+                                    ), horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.oops_something_went_wrong),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontWeight = FontWeight.W700,
+                                        color = MaterialTheme.colorScheme.onBackground,
+                                        lineHeight = 24.sp
+                                    )
+
+                                    Text(
+                                        text = stringResource(R.string.tap_to_try_again),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.W500,
+                                        color = MaterialTheme.colorScheme.surfaceTint,
+                                        lineHeight = 20.sp
+                                    )
+                                }
+                            }
+                        } else {
+                            itemsIndexed(viewModel.tripItems) { index, item ->
+
+                                TripItem(
+                                    navController = navController,
+                                    index = index,
+                                    item = item,
+                                    size = viewModel.tripItems.size
+                                )
+                            }
                         }
                     }
                 }
@@ -400,6 +434,19 @@ fun Screen1(navController: NavController, viewModel: Screen1ViewModel) {
             modifier = Modifier.align(Alignment.TopCenter)
         )
     }
+}
+
+@Composable
+fun UpdateFieldFromSavedState(
+    navController: NavController, key: String, updateAction: (String) -> Unit
+) {
+    navController.currentBackStackEntry?.savedStateHandle?.getLiveData<String>(key)
+        ?.observeAsState()?.value?.let { value ->
+            if (value.isNotEmpty()) {
+                updateAction(value)
+                navController.previousBackStackEntry?.savedStateHandle?.set(key, "")
+            }
+        }
 }
 
 @Composable
@@ -648,7 +695,7 @@ fun Content(
     modifier: Modifier,
     leadingIconResource: Int,
     headerTextResource: Int,
-    subText: String,
+    subText: MutableState<String>,
     subTextResource: Int,
     onClick: () -> Unit
 ) {
@@ -692,7 +739,7 @@ fun Content(
 
             Text(
                 modifier = Modifier.fillMaxWidth(),
-                text = if (subText == "") stringResource(id = subTextResource) else subText,
+                text = if (subText.value.isNotEmpty()) subText.value else stringResource(id = subTextResource),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.W900,
                 color = MaterialTheme.colorScheme.surfaceTint,

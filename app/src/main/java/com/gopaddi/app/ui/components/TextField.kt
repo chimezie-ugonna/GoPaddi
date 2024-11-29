@@ -6,8 +6,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material3.MaterialTheme
@@ -29,6 +31,9 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -49,6 +54,12 @@ fun CustomTextField(
     paddingVertical: Dp = dimensionResource(id = R.dimen.spacingSm2),
     value: MutableState<TextFieldValue> = rememberSaveable { mutableStateOf(TextFieldValue("")) },
     singleLine: Boolean = true,
+    height: Dp = Dp.Unspecified,
+    keyboardOptions: KeyboardOptions = KeyboardOptions(
+        keyboardType = KeyboardType.Text,
+        capitalization = KeyboardCapitalization.None,
+        imeAction = ImeAction.Done
+    ),
     placeHolderMaxLines: Int = 1
 ) {
     Row(modifier = modifier
@@ -83,6 +94,7 @@ fun CustomTextField(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
+                    .height(height = height)
                     .align(Alignment.CenterVertically)
                     .onFocusChanged { hasFocus.value = it.hasFocus }
                     .focusRequester(focusRequester),
@@ -93,7 +105,7 @@ fun CustomTextField(
                     color = MaterialTheme.colorScheme.onBackground,
                     fontWeight = FontWeight.W500,
                     lineHeight = 22.sp
-                ),
+                ), keyboardOptions = keyboardOptions,
                 singleLine = singleLine,
                 cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                 decorationBox = { innerTextField ->

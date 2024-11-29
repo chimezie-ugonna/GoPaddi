@@ -47,4 +47,12 @@
     <string name="flight">Flight</string>
     <string name="hotel">Hotel</string>
     <string name="activity">Activity</string>
+    <string name="failed_to_fetch_trips">Failed to fetch trips: %1$s</string>
+    <string name="failed_to_create_trip">Failed to create trip: %1$s</string>
+    <string name="oops_something_went_wrong">Oops, something went wrong!</string>
+    <string name="tap_to_try_again">Tap to try again.</string>
+    <string name="an_unknown_error_occurred">An unknown error occurred.</string>
+    <string name="error">Error: %1$s</string>
+    <string name="failed_to_parse_response">Failed to parse response: %1$s</string>
+    <string name="empty_response_body">Empty response body</string>
 </resources>
